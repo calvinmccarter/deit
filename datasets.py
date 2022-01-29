@@ -53,8 +53,11 @@ class INatDataset(ImageFolder):
     # __getitem__ and __len__ inherited from ImageFolder
 
 
-def build_dataset(is_train, args):
+def build_dataset(is_train, args, is_resmlp_eval=False):
     transform = build_transform(is_train, args)
+    if is_resmlp_eval:
+        print("using ResMLP eval transform")
+        transform = get_test_transforms(args.input_size)
 
     if args.data_set == 'CIFAR':
         dataset = datasets.CIFAR100(args.data_path, train=is_train, transform=transform)
@@ -107,3 +110,14 @@ def build_transform(is_train, args):
     t.append(transforms.ToTensor())
     t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
     return transforms.Compose(t)
+
+def get_test_transforms(input_size):
+    mean, std = [0.485, 0.456, 0.406],[0.229, 0.224, 0.225]
+    transformations = {}
+    Rs_size=int(input_size/0.9)
+    transformations= transforms.Compose(
+        [transforms.Resize(Rs_size, interpolation=3),
+         transforms.CenterCrop(input_size),
+         transforms.ToTensor(),
+         transforms.Normalize(mean, std)])
+    return transformations
